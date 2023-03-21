@@ -7,8 +7,6 @@ semestor_tag = academic_calendar_soup.find("div", attrs = {"class":"semester_cal
 
 monthly_tags = semestor_tag.find_all("tbody")
 
-# print(monthly_tags[-2])
-
 year = 2023
 
 for tag in monthly_tags:
