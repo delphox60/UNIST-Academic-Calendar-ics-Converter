@@ -1,30 +1,23 @@
 import re
+from datetime import datetime
+import pytz
 from bs4 import BeautifulSoup
+from icalendar import Calendar, Event, vCalAddress, vText
 
 def parse_date(year, month, date):
     ymd_match = re.compile("(20[0-9]+)년[ ]*([0-9]+)월[ ]*([0-9]+)일.*").match(date)
     if ymd_match:
-        return {
-            "year": ymd_match.group(1),
-            "month": ymd_match.group(2),
-            "date": ymd_match.group(3),
-        }
+        return datetime(int(ymd_match.group(1)), int(ymd_match.group(2)), int(ymd_match.group(3)), 0, 0, 0, tzinfo=pytz.timezone('Asia/Seoul'))
+
     md_match = re.compile("([0-9]+)월[ ]*([0-9]+)일.*").match(date)
     if md_match:
-        return {
-            "year": year,
-            "month": md_match.group(1),
-            "date": md_match.group(2),
-        }
+        return datetime(int(year), int(md_match.group(1)), int(md_match.group(2)), 0, 0, 0, tzinfo=pytz.timezone('Asia/Seoul'))
        
     d_match = re.compile("([0-9]+)일.*").match(date)
     if d_match:
-        return {
-            "year": year,
-            "month": month,
-            "date": d_match.group(1),
-        }
+        return datetime(int(year), int(month), int(d_match.group(1)), 0, 0, 0, tzinfo=pytz.timezone('Asia/Seoul'))
         
+calendar = Calendar()
 
 academic_calendar_soup = BeautifulSoup(open("UNIST-academic-calendar-2023.html", "r").read(), "html.parser")
 
@@ -50,7 +43,7 @@ for tag in monthly_tags:
             continue
         
         date = td_tags[0].text
-        event_names = list(map(lambda e : e.strip(), td_tags[1].text.strip().split('\n')))
+        events = list(map(lambda e : e.strip(), td_tags[1].text.strip().split('\n')))
         
         # if re.compile("([0-9]+)월.*([0-9]+)일.*\~([0-9]+)월.*([0-9]+)일.*").match(date):
         period_match = re.compile("(.*)\~(.*)").match(date)
@@ -58,7 +51,24 @@ for tag in monthly_tags:
         if period_match:
             start_date = parse_date(year, month, period_match.group(1).strip())
             end_date = parse_date(year, month, period_match.group(2).strip())
+        else:       
+            start_date = parse_date(year, month, date)
+            end_date = None
 
-            continue
+        event_info = {
+            "events": events,
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+        
+        ic_event = Event()
+        for event_name in event_info["events"]:
+            ic_event.add("name", event)
+            ic_event.add("dtstart", event_info["start_date"])
+            if event_info["end_date"]:
+                ic_event.add("dtend", event_info["end_date"])
+            
+            calendar.add_component(event)
 
-        date = parse_date(year, month, date)
+            
+        
