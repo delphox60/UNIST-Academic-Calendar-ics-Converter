@@ -1,10 +1,7 @@
 import re
-from pathlib import Path
-import os
 import datetime
-import pytz
 from bs4 import BeautifulSoup
-from icalendar import Calendar, Event, vCalAddress, vText
+from icalendar import Calendar, Event
 
 
 def parse_date(year, month, date):
@@ -71,7 +68,6 @@ for tag in monthly_tags:
 
         for event_name in event_info["events"]:
             ic_event = Event()
-            print(event_name)
             ic_event.add("summary", event_name)
             ic_event.add("dtstart", event_info["start_date"])
             if event_info["end_date"]:
